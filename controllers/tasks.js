@@ -1,5 +1,6 @@
 import Task from '../models/Task.models.js'
 import asyncWrap from '../middleware/async.js'
+import {createCustomEror} from '../errors/custom-error.js';
 
 //getAllTasks controller (display tasks)
 const getAllTasks = asyncWrap(async(req,res) => {
@@ -10,11 +11,15 @@ const getAllTasks = asyncWrap(async(req,res) => {
 });
 
 //get singleTask
-const getTask = asyncWrap(async(req,res) => {
+const getTask = asyncWrap(async(req,res,next) => {
        const { id: taskID } = req.params;
        const task = await Task.findOne({ _id: taskID });
        if(!task){
-        return res.status(404).json({msg:`No task with id :${taskID}`});
+        /* const error = new Error('Not Found');
+        error.status = 404;
+        return next(error); */
+        //return res.status(404).json({msg:`No task with id :${taskID}`});
+        return next(createCustomEror(`No task with id : ${taskID}`,404));
        }
        res.status(200).json({ task });
     
@@ -31,7 +36,7 @@ const deleteTask = asyncWrap(async(req,res) => {
       const {id:taskID} = req.params;
       const task = await Task.findOneAndDelete({_id:taskID});
       if(!task){
-        return res.status(404).json({msg:`No task with id :${taskID}`});
+        return next(createCustomEror(`No task with id : ${taskID}`,404));
       }  
       res.status(200).json({msg:`${task.name} deleted succesfully`});
 });
@@ -44,7 +49,7 @@ const updateTask = asyncWrap(async(req,res) => {
             runValidators:true,
         });       
         if(!task){
-            return res.status(404).json({msg:`No task with id : ${taskID}`});
+            return next(createCustomEror(`No task with id : ${taskID}`,404));
         }        
         res.status(200).json(task);
 }); 
@@ -58,7 +63,7 @@ const editTask = asyncWrap(async(req,res) => {
             overwrite:true
         });
         if(!task){
-            return res.status(404).json({msg:`No task with id : ${taskID}`});
+            return next(createCustomEror(`No task with id : ${taskID}`,404));
         }
         res.status(200).json(task);
 });
